@@ -1,0 +1,22 @@
+﻿apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: thesis-simple-app
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/dummy/simple-repo.git
+    targetRevision: HEAD
+    path: .
+    directory:
+      include: simple-app.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: dev
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true

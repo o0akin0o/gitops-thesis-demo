@@ -1,0 +1,20 @@
+﻿apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: thesis-simple
+  namespace: dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: thesis-simple
+  template:
+    metadata:
+      labels:
+        app: thesis-simple
+    spec:
+      containers:
+      - name: thesis-simple
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
