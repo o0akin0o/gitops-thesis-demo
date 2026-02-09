@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: thesis-simple-uat
+  namespace: argocd
+  annotations:
+    environment: uat
+    auto-sync: "true"
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/o0akin0o/gitops-thesis-demo.git
+    targetRevision: HEAD
+    path: environments/uat
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: uat
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
