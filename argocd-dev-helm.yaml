@@ -11,7 +11,7 @@ spec:
     path: charts/thesis-app
     helm:
       valueFiles:
-      - environments/helm-values/dev.yaml
+      - ../../environments/helm-values/dev.yaml
   destination:
     server: https://kubernetes.default.svc
     namespace: dev
