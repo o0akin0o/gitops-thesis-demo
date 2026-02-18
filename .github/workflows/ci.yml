@@ -1,4 +1,4 @@
-name: Build and Deploy
+name: Build and Deploy with Helm
 
 on:
   push:
@@ -30,21 +30,30 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           context: .
+          file: ./Dockerfile
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
       
-      - name: Update GitOps config
+      - name: Update Helm values for dev
         run: |
-          # Clone GitOps repository
-          git clone https://github.com/${{ github.repository }}.git gitops-config
-          cd gitops-config
-          
-          # Update image tag in values file
-          sed -i "s|tag:.*|tag: ${{ github.sha }}|" environments/dev/values.yaml
-          
-          # Commit and push
-          git config user.email "github-actions@github.com"
-          git config user.name "GitHub Actions"
-          git add .
-          git commit -m "Update image to ${{ github.sha }}"
-          git push
+          # Kiểm tra file values.yaml
+          if [ -f environments/dev/values.yaml ]; then
+            # Update image tag
+            sed -i "s|tag:.*|tag: ${{ github.sha }}|" environments/dev/values.yaml
+            
+            # Show changes (debug)
+            echo "Updated values.yaml:"
+            cat environments/dev/values.yaml
+            
+            # Commit và push
+            git config user.email "github-actions@github.com"
+            git config user.name "GitHub Actions"
+            git add environments/dev/values.yaml
+            git commit -m "Update dev image to ${{ github.sha }}"
+            git push
+          else
+            echo "Error: environments/dev/values.yaml not found!"
+            exit 1
+          fi

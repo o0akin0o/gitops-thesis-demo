@@ -1,0 +1,10 @@
+﻿# Helm
+charts/
+*.tgz
+
+# IDE
+.vscode/
+.idea/
+
+# Local
+*.local
