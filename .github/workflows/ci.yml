@@ -3,10 +3,13 @@ name: Build and Deploy with Helm
 on:
   push:
     branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
+  CONFIG_REPO: o0akin0o/thesis-gitops-config
 
 jobs:
   build:
@@ -31,29 +34,34 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
-          push: true
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
       
-      - name: Update Helm values for dev
+      - name: Checkout Config Repository
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ env.CONFIG_REPO }}
+          token: ${{ secrets.GITOPS_TOKEN }}
+          path: config-repo
+      
+      - name: Update Helm values in Config Repo
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
-          # Kiểm tra file values.yaml
-          if [ -f environments/dev/values.yaml ]; then
-            # Update image tag
-            sed -i "s|tag:.*|tag: ${{ github.sha }}|" environments/dev/values.yaml
-            
-            # Show changes (debug)
-            echo "Updated values.yaml:"
-            cat environments/dev/values.yaml
-            
-            # Commit và push
-            git config user.email "github-actions@github.com"
-            git config user.name "GitHub Actions"
-            git add environments/dev/values.yaml
-            git commit -m "Update dev image to ${{ github.sha }}"
-            git push
-          else
-            echo "Error: environments/dev/values.yaml not found!"
-            exit 1
-          fi
+          cd config-repo
+          
+          # Update image tag
+          sed -i "s|tag:.*|tag: ${{ github.sha }}|" environments/dev/values.yaml
+          
+          # Show changes
+          echo "Updated values.yaml:"
+          cat environments/dev/values.yaml
+          
+          # Commit and push
+          git config user.email "github-actions@github.com"
+          git config user.name "GitHub Actions"
+          git add environments/dev/values.yaml
+          git commit -m "Update dev image to ${{ github.sha }} [skip ci]"
+          git push
